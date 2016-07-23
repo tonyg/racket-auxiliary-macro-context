@@ -34,8 +34,12 @@ pattern-language over assertions in
 
 # Installation
 
-Check out the repository. Then, in the directory containing
-`Makefile`,
+Install via the package catalog,
+
+    raco pkg install auxiliary-macro-context
+
+Alternatively, check out the repository and, in the directory
+containing `Makefile`,
 
     make link
 
