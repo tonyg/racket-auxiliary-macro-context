@@ -16,7 +16,7 @@
   #:macro-definer-name define-test-expander
   #:introducer-parameter-name current-test-expander-introducer
   #:local-introduce-name syntax-local-test-introduce
-  #:expander-id-predicate-name test-expander-id?
+  #:expander-form-predicate-name test-expander-form?
   #:expander-transform-name test-expander-transform)
 
 (define-for-syntax (parse-test stx)
@@ -26,8 +26,10 @@
      #'foo]
     ["bar"
      #'bar]
-    [(expander args ...)
-     (test-expander-id? #'expander)
+    ["zot"
+     "zot"]
+    [expander
+     (test-expander-form? #'expander)
      (test-expander-transform disarmed-stx
                               (lambda (result) (parse-test (syntax-rearm result stx))))]
     [(piece ...)
@@ -35,8 +37,10 @@
        (#,@(map parse-test (syntax->list #'(piece ...)))))]))
 
 (define-test-expander quux
-  (syntax-rules ()
-    [(_) ("foo" "bar" "foo")])
+  (lambda (stx)
+    (syntax-case stx ()
+      [(_) #'("foo" "bar" "foo")]
+      [id (identifier? #'id) #'("zot")]))
   (syntax-rules ()
     [(_) "i am a quux"]))
 
@@ -49,4 +53,5 @@
 (module+ test
   (require rackunit)
   (check-equal? (quux) "i am a quux")
-  (check-equal? (do-test ("bar" "bar" (quux) "bar" "bar")) '(bar bar (foo bar foo) bar bar)))
+  (check-equal? (do-test ("bar" "bar" (quux) "bar" "bar")) '(bar bar (foo bar foo) bar bar))
+  (check-equal? (do-test ("bar" "bar" quux "bar" "bar")) '(bar bar ("zot") bar bar)))

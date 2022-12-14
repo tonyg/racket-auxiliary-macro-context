@@ -49,7 +49,7 @@ or
 
 # Licence
 
-Copyright (C) 2016 Tony Garnock-Jones <mailto:tonyg@leastfixedpoint.com>
+Copyright © 2016, 2022 Tony Garnock-Jones <mailto:tonyg@leastfixedpoint.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as

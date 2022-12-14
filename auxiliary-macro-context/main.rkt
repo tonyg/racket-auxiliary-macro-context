@@ -15,7 +15,7 @@
         #:macro-definer-name define-expander
         #:introducer-parameter-name current-expander-introducer
         #:local-introduce-name syntax-local-expander-introduce
-        #:expander-id-predicate-name expander-id?
+        #:expander-form-predicate-name expander-form
         #:expander-transform-name expander-transform)
      (quasisyntax/loc stx
        (begin
@@ -68,6 +68,12 @@
              (and (identifier? stx)
                   (expander? (syntax-local-value stx (lambda () #f)))))
 
+           (define (expander-form stx)
+             (syntax-case stx ()
+               [(expander args (... ...)) (expander-id? #'expander) #'expander]
+               [expander (expander-id? #'expander) #'expander]
+               [_ #f]))
+
            (define current-expander-introducer
              (make-parameter
               (lambda (x)
@@ -81,21 +87,20 @@
              ((current-expander-introducer) x))
 
            (define (expander-transform disarmed-stx k)
-             (syntax-case disarmed-stx ()
-               [(expander args (... ...))
-                (let* ((expander* (syntax-local-value #'expander))
-                       (transformer (expander-proc expander*))
-                       (transformer (if (set!-transformer? transformer)
-                                        (set!-transformer-procedure transformer)
-                                        transformer)))
-                  (define introducer (make-syntax-introducer))
-                  (parameterize ((current-expander-introducer introducer))
-                    (let* ((mstx (introducer (syntax-local-introduce disarmed-stx)))
-                           (mresult (if (procedure-arity-includes? transformer 2)
-                                        (transformer expander* mstx)
-                                        (transformer mstx)))
-                           (result (syntax-local-introduce (introducer mresult))))
-                      (k result))))])))
+             (let* ((expander-stx (expander-form disarmed-stx))
+                    (expander* (syntax-local-value expander-stx))
+                    (transformer (expander-proc expander*))
+                    (transformer (if (set!-transformer? transformer)
+                                     (set!-transformer-procedure transformer)
+                                     transformer)))
+               (define introducer (make-syntax-introducer))
+               (parameterize ((current-expander-introducer introducer))
+                 (let* ((mstx (introducer (syntax-local-introduce disarmed-stx)))
+                        (mresult (if (procedure-arity-includes? transformer 2)
+                                     (transformer expander* mstx)
+                                     (transformer mstx)))
+                        (result (syntax-local-introduce (introducer mresult))))
+                   (k result))))))
 
          (define-syntax (define-expander stx)
            (syntax-case stx ()
